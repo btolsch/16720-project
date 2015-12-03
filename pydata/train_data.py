@@ -23,13 +23,27 @@ def get_train_data(anno_filename):
     annolist = ElementTree.parse(sys.argv[1]).getroot()
     aTrain = []
     LTrain = []
+    boxesTrain = []
+    imgnamesTrain = []
     for anno in annolist:
         annorect = anno.find('annorect')
         L = get_L(annorect)
-        a = assign_articulation_index(L)
         LTrain.append(L)
-        aTrain.append(a)
-    return (np.atleast_2d(aTrain).T, np.array(LTrain))
+        imgnamesTrain.append(anno.find('image').find('name').text)
+        boxesTrain.append(get_box(annorect))
+        aTrain.append(assign_articulation_index(L))
+    return (np.array(imgnamesTrain, dtype=np.object), np.atleast_2d(aTrain).T, np.array(LTrain), np.array(boxesTrain))
+
+
+def get_box(annorect):
+    box = np.array([
+        int(annorect.find('x1').text),
+        int(annorect.find('y1').text),
+        int(annorect.find('x2').text),
+        int(annorect.find('y2').text),
+        int(annorect.find('score').text)
+    ])
+    return box
 
 
 def get_L(annorect):
@@ -67,5 +81,5 @@ if __name__ == '__main__':
     if len(sys.argv) != 3:
         print('usage: train_data.py annotation_file mat_filename')
         exit(1)
-    aTrain, LTrain = get_train_data(sys.argv[1])
-    sio.savemat(sys.argv[2], {'aTrain': aTrain, 'LTrain': LTrain})
+    imgnamesTrain, aTrain, LTrain, boxesTrain = get_train_data(sys.argv[1])
+    sio.savemat(sys.argv[2], {'imgnamesTrain': imgnamesTrain, 'aTrain': aTrain, 'LTrain': LTrain, 'boxesTrain': boxesTrain})

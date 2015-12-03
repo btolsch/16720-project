@@ -1,5 +1,8 @@
 %could be called by loading variables: load train210.mat
 function [p_a, p_xi_mu, p_xi_var] = TrainPriors(aTrain, LTrain)
+    %p_a is an numArtic x 1 vector with the probability of each articulation state
+    %p_xi_mu is an AxMx2 vector giving the average xi-x0 for each joint and articulation state
+    %p_xi_var is an AxMx2x2 vector giving the covariance matrix of xi-x0 for each joint and articulation state
 
 numArtic = max(aTrain) - min(aTrain) + 1;
 aCounts = zeros(numArtic, 1);

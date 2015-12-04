@@ -24,6 +24,7 @@ function [keypoints, descriptors] = getAllKeypointsAndDescriptors(imgNames, boxe
         box = boxes(imNo,:);
         patch = im(box(2):box(4), box(1):box(3), :);
         [pts, ~] = DoGdetector(patch, sigma0, k, levels, theta_c, theta_r);
+        pts(:,1:2) = pts(:,1:2) + box(1:2);
         keypoints{imNo} = pts;
         descriptors{imNo} = shapeContexts(pts);
     end

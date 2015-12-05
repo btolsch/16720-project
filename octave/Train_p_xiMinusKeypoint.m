@@ -1,4 +1,4 @@
-function [p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var] = Train_p_xiMinusKeypoint(aTrain, LTrain, allKeypoints, allMemberships)
+function [p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var] = train_p_xiMinusKeypoint(aTrain, LTrain, allKeypoints, allMemberships)
     %p_xiMinusKeypoint_mu is an MxAxKx2 matrix where p_xiMinusKeypoint_mu(i,a,cj,:) gives the mean value of p(x_i-keypoint | a,cj)
     %p_xiMinusKeypoint_var is an MxAxKx2x2 vector where p_xiMinusKeypoint_var(i,a,cj,:) gives the covariance of p(x_i-keypoint | a,cj)
 

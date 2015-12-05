@@ -92,8 +92,13 @@ end
     [allKeypoints, allDescriptors] = getAllKeypointsAndDescriptors(imgnamesTrain_full, boxesTrain, sigma0, k, levels, theta_c, theta_r);
     [codebook, allMemberships] = clusterAllDescriptors(allDescriptors, numClusters);
     [p_a, p_xi_mu, p_xi_var] = train_p_xi_and_p_a(aTrain, LTrain);
-    [p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var] = Train_p_xiMinusKeypoint(aTrain, LTrain, allKeypoints, allMemberships);
+    [p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var] = train_p_xiMinusKeypoint(aTrain, LTrain, allKeypoints, allMemberships);
     
+    %test best_L_and_a
+    %%still need to find p_xi_given_appearance by calling p_xi_given_evidence() for each joint
+    [L,a,pr] = best_L_and_a(p_xi_given_appearance, p_xi_mu,p_xi_var, p_a)
+    
+    %test p_xi_given_evidence
     imNo = 2;
     keypoints_test = allKeypoints{imNo};
     descriptors_test = allDescriptors{imNo};
@@ -102,8 +107,7 @@ end
     p_x1_given_a1 = p_xi_given_evidence(1, 1, keypoints_test, descriptors_test, imsize, codebook, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
     imdisp(p_x1_given_a1,[]);
     
-    
-    
+    %test clustering
     imNo = 2;
     im = imread([imgnamesTrain_full{imNo}]);
     box = boxesTrain(imNo,:);

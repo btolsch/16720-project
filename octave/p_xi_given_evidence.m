@@ -12,7 +12,7 @@ function [p_xi] = p_xi_given_evidence(jointNo, a, keypoints, descriptors, imsize
         %p_xiMinusKeypoint_var - p_xiMinusKeypoint_var(jointNo,a,cj,:,:) gives the 2x2 matrix with the covariance of xi-keypoint
         %dispProgress - whether to display progress to stdout
     %OUTPUTS
-        %p_xi - image of size [H, W, numJoints] giving the probability of x_jointNo landing on each pixel
+        %p_xi - image of size [H, W] giving the probability of x_jointNo landing on each pixel
     N = size(keypoints,1);
     K = size(codebook,1);
     p_cj = p_cj_for_keypoints(descriptors, codebook);

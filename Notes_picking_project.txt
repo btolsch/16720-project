@@ -1,0 +1,33 @@
+Intro/Tutorials:
+    http://ags.cs.uni-kl.de/fileadmin/inf_ags/opt-ss15/OPT_SS2015_lec01.pdf
+    http://opencv-srf.blogspot.com/
+Sweet:
+    1) http://lear.inrialpes.fr/people/triggs/pubs/Dalal-cvpr05.pdf
+        human detection using Histograms of Oriented Gradients
+        so I guess it's more of a still-image than a video thing, but we have to start somewhere
+    2) https://www.d2.mpi-inf.mpg.de/andriluka_cvpr08
+        combines detection and tracking - which is great for us
+        Comes with training data!
+        REFERENCES:
+            http://luthuli.cs.uiuc.edu/~daf/courses/AppCV/Papers-2/leibe-crowdedscenes-cvpr05.pdf
+                ... but the containing paper covers it well enough anyhow
+    3) http://www.gavrila.net/Publications/cviu99.pdf
+        "human detection survey"
+        2d and 3d approaches
+    4) http://vision.ics.uci.edu/papers/RamananF_NIPS_2003/RamananF_NIPS_2003.pdf
+        this is about annotating motions
+        that's probably not something we want to do
+    5) http://www.ics.uci.edu/~dramanan/papers/tracker_journal_draft.pdf
+        personalizing models with early data
+        older paper: http://vision.ics.uci.edu/papers/RamananF_CVPR_2003/RamananF_CVPR_2003.pdf
+        same paper (but I didn't check closely): http://vision.ics.uci.edu/papers/RamananFZ_PAMI_2007/RamananFZ_PAMI_2007.pdf
+Stuff for still images:
+    http://vision.ics.uci.edu/papers/BoF_CVPR_2011/BoF_CVPR_2011.pdf
+    http://vision.ics.uci.edu/papers/Ramanan_NIPS_2006/Ramanan_NIPS_2006.pdf
+    http://www.ics.uci.edu/~dramanan/papers/pose_pami.pdf
+    http://www.ics.uci.edu/~dramanan/papers/dpm_acm.pdf
+
+
+Possible datasets:
+    From sweet paper #2
+    HumanEVA - human motions and their 3d captures

@@ -1,0 +1,269 @@
+﻿POSSIBLE THINGS TO PUT IN PRESENTATION
+  --Shape Contexts
+    --what they are and how they work
+    --some images demonstrating that they work (the letter "A", some circles)
+    --(possibly) make some more letters, run it, and see how good it is at identifying the letters
+    --why they were hard to use for the main project
+  --Why to combine tracking and detection; why articulation state is helpful in this
+    --include figure #2 from paper #1
+  --What our training data looks like
+    --Your parser
+    --Not labeled for "a"; using leg angle to determine "a"
+    --Our generated images labeling part locations
+  --Training
+    --how it works; the equations (but with reasonable names like p(xi-keypoint | a, cj) rather than p(xi | a, cj, ek_app))
+    --(verbally) our trouble understanding it at first
+    --images demonstrating that training "worked", such as figure #4 in paper #0.  Fortunately, these will look good.
+  --How the algorithm works: testing
+    --explaining how we searched the parameter space
+    --results on training data (for sanity check)
+       --both with a patch about the person and with the larger image
+    --results on testing data, even if absolutely horrible (WE STILL NEED THESE)
+    --explanation of woes (why things might not generalize well, why it might run slow, etc)
+  --Future work / how others solved these problems
+    --mention paper #6 for how to speed up (keeping it very high level: it discretizes the search space)
+    --mention that paper #16 was a lot clearer on detection / feature descriptors, and we should have used them
+    --mention Harris-Laplace detector (and possibly why it was initially abandoned: we didn't think we need it and it was not as interesting (it only got half a sentence in paper #0...))
+    --mention shortcomings of Shape Contexts / figuring out how to use them well / limit their region of interest
+  --Mention that in we were overly ambitious, and that we could or maybe should have implemented some of the papers mentioned in #0 instead of doing #0 itself, or something
+
+
+
+
+TASKS
+  testing our detection - Thurs
+    -read about paper #6, hope it isn't too crazy
+    -either implement that, or make our own thing
+    -run it and think about our results
+  half of poster/slide - Fri
+  plan how to tackle tracking - Fri
+    if we are taking longer than expected here, cut straight to poster
+  write tracking - Sat
+  test tracking - Sat
+  slide, poster - Sun
+
+
+
+some terms:
+    L={x0...xN}
+        configuration model
+        x0 gives object center position and scale
+        xi give part center position and scale
+    E={ek_app,ek_pos|k=1...K}
+        image evidence
+        set of local features observed in the teest image
+        ek_app is an appearance descriptor
+            my guess: this is the set of parts of the image corresponding to person parts, each transformed into some uniform orientation for that person part
+            very likely a bad guess
+        ek_pos is the position and scale
+            ie, ek_pos is just the kth keypoint
+    a
+        articulation state or aspect
+        ie, different phases in the walking cycle
+        lets us make the parts conditionally independent
+        observing a lets model become a star model allowing efficient dynamic programming [6] for inference
+        for our equations' sake, we don't care what a is, and marginalize it out
+        Guess:
+            we think it's a bit arbitrary
+            is probably more important when we get to tracking
+            problem 1) a isn't given to us for the training images
+    beta
+        a regularizer for the evidence obtained from individual image features
+    C = {cj|j=1...J}
+        object-specific "codebook"
+        constructed by clustering local features extracted from training images
+        also compute "occurrence distribution" for each cj
+            there is a REALLY hard to parse sentence which starts at the end of page 3
+            involves relative position and scale of cluster w.r.t. part centers
+            allows us to compute p(xi|a,cj,ek_pos)
+            I am guessing it means to find p(xi|a,ek_pos) for each cj? (only since that would be useful)
+        Guess:
+            J is the number of clusters
+            clustering is done on the feature points WITHOUT any consideration of what part they go to or anything
+
+
+Algorithm (guess)
+    TRAINING
+        1) HOW DO WE GET a for each person in each image?
+            first, lets check out the training data:
+                if the # of images per person is constant, it's probably 1 per articulation state (or if the first frame for each is similar, or etc)
+            if that fails, we can do something arbitrary:
+                labeling all the a=0 frames and interpolating between them
+                looking at teh angle between legs?
+        2) Get keypoints and their feature descriptors on the training data
+        3) Cluster them all, irrespective of their source image or part.  Call the cluster centers cj for each cluster j.
+            -via clustering, we have found C, which is everything we need to get p(cj | ek_app)
+                -probability is porportional to gaussian distance from cluster center
+            -at this point, each keypoint has an <ek_pos=<x,y>, cj>
+        4) For each keypoint, for each known xi:
+            get xi-ek_pos and add it to the p(xi-ek_pos | a,cj) distribution
+        5) Now find p(xi-x0 | a), which is totally separate from the previous 3 steps
+        6) Find p(a) ?
+        7) Training is now done??
+    DETECTING
+        
+        get L for each a which maximizes p(L|a,E) (see paper 6), marginalizing over all a
+
+        
+the equations involved in part 1 are:
+    p(L|E) = SUM_a[ p(L|a,E) * p(a) ]
+    p(L|a,E) = PROD_i[ p(xi|x0,a) * [ beta + SUM_ek[ p(xi|a,ek) ] ]
+        see reference 6 to maximize this efficiently
+    p(xi|a,ek) = SUM_cj[ p(xi|a,cj,ek_pos) * p(cj|ek_app)
+        we can check SUM_ek[ p(xi|a,ek) ] with visualizations like fig 4 in the paper
+we need to get these:
+    p(a)
+        IDK, but reference [6] may be a good place to start learning about it
+    p(xi|x0,a)  =  p(xi-x0 | a)
+        position is gaussian distribution learned from training images
+        scales chosen empircally
+    p(xi|a,cj,ek_pos)  =  p(xi-ek_pos | a,cj) ?
+        leaned from training data
+        see "occurrence distribution" under the term "C" below.  It confuses me.
+        as well as I can understand it, we learn p(xi|a,ek_pos) for each cj?
+        Guess:
+            p(xi|a,x0) is a single distribution of xi-x0 for each a; x0 is only used to make the positions relative
+            similarly, p(xi,a,cj,ek_pos) is a single distribution of xi-ek_pos for each <a,cj> pair.
+            During training: for each keypoint k at position ek_pos, and for each xi, take xi-ek_pos and let it contribute to the p(xi-ek_pos,a,cj) distribution for the cj of that keypoint and the a of that image
+            During testing, near the start (before x0 matters), look up we are figuring out xi = (xi-ek_pos)+ek_pos by using p(xi-ek_pos,a,cj)
+    p(cj|ek_app)
+        discrete distribution over codebooks, based on a Gaussian similarity measure
+    beta
+
+
+Notes from paper #2
+	https://en.m.wikipedia.org/wiki/Shape_context
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Notes from Paper #17 (Hessian-Laplace Interest Point Detectors)
+
+An implementation to copy:
+    http://code.opencv.org/attachments/609/HarrisLaplace.patch
+    http://code.opencv.org/attachments/280/gaussian_DOG_pyramid.diff
+
+Fast (and simpler):
+    1) Run Harris Detector at scales sigma0, 1.2*sigma0, 1.2*1.2*sigma0, ...
+        cornerness = det(mu) - alpha*trace^2(mu)  %%this is our detector
+        mu(x,sigmaI,sigmaD) = [mu11,mu12;mu21,mu22]
+            = sigmaD*sigmaD*g(sigmaI)*[Lx^2(x,sigmaD), LxLy(x,sigmaD); LxLy(x,sigmaD), Ly^2(x,sigmaD)]
+        sigmaI/D = integration/differentiation scale
+        La = derivitive in the a direction
+        The eigenvalues of scaleAdaptedSecondMomentMatrix represent two principal signal changes in the neighborhood of a point
+        ((Figure 2 useful for checking results at this point))
+    2) extract interest points as local maxima at each level; reject if small cornerness
+    3) For each interest point, given that it's scale is L:
+        -Get LoG at scale L, L+1, L-1.
+            |LoG(x,sigmaN)| = sigmaN^2 * |Lxx(x,sigmaN)+Lyy(x,sigmaN)|
+        -reject if LoG not maximum at L or if LoG below threshold
+Slow:
+    1) Run Harris-Laplace Detector at scales sigma0, 1.4*sigma0, 1.4*1.4*sigma0, ...
+    2) extract interest points as local maxima at each level; reject if small cornerness
+    3) Compute mu(x,sigmaR) with sigmaI=sigmaR and sigmaD=0.7*sigmaR
+    4) Apply an iterative algorithm at each point to simultaneously detect location and scale of interest points
+        the extrema over scale of the LoG are used to select the scale of interest points
+        regect if no LoG extremum or if response below threshold.
+       Given initial point x and scale sigmaI, iteration steps are:
+        1) Find local extremum over scale of LoG for the point x_(k), otherwise reject point.
+            Use scales  in range sigmaI_(k+1)=t*sigmaI_(k) with t in [0.7,..,1.4]
+        2) Detect the spatial location x_(k+1) of maximum of Harris measure nearest x_(k) for selected scale sigmaI_(k+1).
+        3) Got to Step 1 if sigmaI_(k+1) != sigmaI_(k) or x_(k+1) != x_(k).
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+    
+things to do (later; not very complete):
+    partISM (p(E|X0*,Y*)) - slides 9-19, 29
+    speed prior (p(X0*) - slide 29
+    hGPLVM (p(Y*)) - slides 29, 36, 46
+        hierarchical Gaussian process latent variable model (hGPLVM) [Lawrence&Moore, ICML 2007]   
+    slide 38: training for modeling body dynamics
+    I don't understand slides 54-67... but I guess that's for later anyhow
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+What each reference from the main paper is actually used for:
+(note: I only read thoroughly through section 2)
+
+[0]
+    https://www.d2.mpi-inf.mpg.de/andriluka_cvpr08
+    the main paper
+[16] B. Leibe, E. Seemann, and B. Schiele. Pedestrian detection in crowded scenes.
+    http://luthuli.cs.uiuc.edu/~daf/courses/AppCV/Papers-2/leibe-crowdedscenes-cvpr05.pdf
+    referenced quite frequently for part 1
+[2] S. Belongie, J. Malik, and J. Puzicha. Shape context: A new descriptor for shape matching and object recognition. NIPS*2000.
+    http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.8567&rep=rep1&type=pdf
+    describes "shape context feature descriptors" - the feature descripture used by [0]
+[17] K. Mikolajczyk and C. Schmid. Scale and affine invariant interest point detectors. IJCV, 60:63–86, 2004.
+    http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/mikolajczyk_ijcv2004.pdf
+    describes the "Hessian-Laplace interest point operator" - used as a detector for [0]
+[6] P. F. Felzenszwalb and D. P. Huttenlocher. Pictorial structures for object recognition. IJCV, 61:55–79, 2007.
+    http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.66.5153&rep=rep1&type=pdf
+    helped inspire [0]'s part-based sceme, by using a proposes pictorial structures model
+    describes efficient dynamic programming after marginalizing out articulation state
+    gives generalized distance transform to efficiently maximize p(L|a,E)
+
+[10] S. Ioffe and D. Forsyth. Human tracking with mixtures of trees. ICCV 2001.
+    helped inspire [0]'s part-based sceme, by using a proposes pictorial structures model
+[12] X. Lan and D. P. Huttenlocher. Beyond trees: Commonfactor models for 2d human pose recovery. ICCV 2005.
+    talks about articulation state as phase in walking cycle
+[26] C. K. I. Williams and M. Allan. On a connection between object localization with a generative template of features and pose-space prediction methods. Technical Report EDI-INFRR-0719, University of Edinburgh, 2006.
+    describes reasoning behind eqn 3 of paper [0]
+
+[14] N. D. Lawrence and A. J. Moore. Hierarchical Gaussian process latent variable models. ICML 2007.
+    describes hGPLVM
+    will be more useful for part 2
+
+
+[15] B. Leibe, K. Schindler, and L. Van Gool. Coupled detection and trajectory estimation for multi-object tracking. ICCV 2007.
+    most closely related to [0]
+    extended 16 to enable detection and trajectory estimation in complex traffic scenes
+    can't handle long occlusion; needs static camera; doesn't allow for low viewpoints
+
+[19] D. Ramanan, D. A. Forsyth, and A. Zisserman. Tracking people by learning their appearance. PAMI, 29:65–81, 2007.
+    two-stage approach that first builds a model of the appearance of individual people, and then tracks them by detecting those models in each frame
+    uses only very simple limb detectors based on finding parallel lines of contrast in the image
+[27] B. Wu and R. Nevatia. Detection and tracking of multiple, partially occluded humans by Bayesian combination of edgelet based part detectors. IJCV, 75:247–266, 2007.
+    an approach for detecting and tracking partially occluded people using an assembly of body parts
+
+
+
+[3] N. Dalal and B. Triggs. Histograms of oriented gradients for human detection. CVPR 2005.
+    lightly mentioned as one state-of-the-art detector and a recent advance in people detection
+    lightly mentioned aas being out-performed by 0 for pedestrian detection
+[5] J. Deutscher and I. Reid. Articulated body motion capture by stochastic search. IJCV, 61:185–205, 2005.
+    lightly mentioned as an example of "typical tracking approaches that need to perform stochastic search in high-dimensional, continuous spaces"
+    lightly mentioned as relying on silhouettes
+[18] K. Okuma, A. Taleghani, N. De Freitas, J. J. Little, and D. G. Lowe. A boosted particle filter: Multitarget detection and tracking. ECCV 2004.
+    lightly mentioned as an example of tracking by detection being used in recent work
+[8] H. Grabner and H. Bischof. On-line boosting and vision. CVPR 2006.
+    lightly mentioned as an example of tracking by detection being used in recent work
+[1] S. Avidan. Ensemble tracking. PAMI, 29:261–271, 2007.
+    lightly mentioned as an example of tracking by detection being used in recent work
+[24] P. Viola and M. Jones. Robust real-time face detection. IJCV, 57:137–164, 2004.
+    lightly mentioned as a recent advance in people detection
+[23] R. Urtasun, D. J. Fleet, and P. Fua. 3D people tracking with Gaussian process dynamical models. CVPR 2006.
+    lightly mentioned as an example of using alternative methods for exploring the search space rather than stochastic search
+[7] A. Fossati, M. Dimitrijevic, V. Lepetit, and P. Fua. Bridging the gap between detection and tracking for 3D monocular video-based motion capture. CVPR 2007.
+    lightly mentioned as an example of using alternative methods for exploring the search space rather than stochastic search
+[4] D. Demirdjian, L. Taycher, G. Shakhnarovich, K. Grauman, and T. Darrell. Avoiding the ”streetlight effect”: Tracking by exploring likelihood modes. ICCV 2005.
+    lightly mentioned as an example of using alternative methods for exploring the search space rather than stochastic search
+[22] C. Sminchisescu, A. Kanaujia, and D. N. Metaxas. BM3E: Discriminative density propagation for visual tracking. PAMI, 29:2030–2044, 2007.
+    lightly mentioned as an example of using alternative methods for exploring the search space rather than stochastic search
+[21] L. Sigal and M. J. Black. Measure locally, reason globally: Occlusion-sensitive articulated pose estimation. CVPR 2006.
+    lightly mentioned as and example that integrates occlusion reasoning into a 2D articulated tracking model
+    only deals with self-occlusions
+[11] M. Isard and J. MacCormick. BraMBLe: A Bayesian multiple-blob tracker. ICCV 2001.
+    mentioned as demonstrating multiple-people blob-tracking methods
+[20] E. Seemann and B. Schiele. Cross-articulation learning for robust detection of pedestrians. DAGM, 2006.
+    lightly mentioned as being out-performed by 0 for pedestrian detection
+
+
+[9] K. Grochow, S. L. Martin, A. Hertzmann, and Z. Popovic. Style-based inverse kinematics. ACM SIGGRAPH, 2004.
+    ??? (haven't seen it yet with what I read so far)
+[13] N. D. Lawrence. Probabilistic non-linear principal component analysis with Gaussian process latent variable models. J. Mach. Learn. Res., 6:1783–1816, 2005.
+    ??? (haven't seen it yet with what I read so far)
+[25] J. M.Wang, D. J. Fleet, and A. Hertzmann. Gaussian process dynamical models. NIPS*2005.
+    ??? (haven't seen it yet with what I read so far)
+

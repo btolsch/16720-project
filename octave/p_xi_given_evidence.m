@@ -15,9 +15,13 @@ function [p_xi] = p_xi_given_evidence(jointNo, a, keypoints, p_cj, imsize, p_xiM
     N = size(keypoints,1);
     K = size(p_cj,2);
     p_xi = zeros(imsize,'double');
+    if (dispProgress)
+        disp(['Getting p_xi_given_evidence (for a=',num2str(a),', jointNo=',num2str(jointNo),') with ',num2str(N),' keypoints...']);
+        fflush(stdout);
+    end
     for kpNo = 1:N
-        if (dispProgress)
-            disp(['On keypoint ',num2str(kpNo),'/',num2str(N)]);
+        if (dispProgress & rem(kpNo,100)==0)
+            disp(['  On keypoint ',num2str(kpNo),'/',num2str(N)]);
             fflush(stdout);
         end
         for cj = 1:K
@@ -29,5 +33,9 @@ function [p_xi] = p_xi_given_evidence(jointNo, a, keypoints, p_cj, imsize, p_xiM
                 p_xi = p_xi + p_xi_given_cj * p_cj(kpNo,cj);
             end
         end
+    end
+    if (dispProgress)
+        disp(['  Done.']);
+        fflush(stdout);
     end
 end

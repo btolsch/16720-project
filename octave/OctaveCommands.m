@@ -25,36 +25,13 @@ function visualizeShapeContext(fd, nbinsLogR=5, nbinsTheta=12)
     imshow(reshape(fd,[nbinsLogR,nbinsTheta]),[]);
 end
 function visualizeColoredKeypoints(im,keypoints,clusters)
-    colors = 'rgbmckkkkkkkkkkkkkkkkkkkkkkk';
+    colors = 'ymcrgbwkkkkkkkkkkkkkkkkkkkkkkkk';
     hold on;
     imshow(im);
     for c = 1:max(clusters)
         pts = keypoints(clusters==c,:);
         plot(pts(:,1)',pts(:,2)', '*', 'color', colors(c), 'MarkerSize', 6, 'LineWidth', 2);
     end
-end
-
-function plotImAndLocs2(im,locs1,locs2)
-    close();
-    image(im);
-    hold on;
-    plot(locs1(:,1),locs1(:,2),'go');
-    plot(locs2(:,1),locs2(:,2),'b.');
-    for i = 1:length(locs1)
-        p1 = locs1(i,:);
-        p2 = locs2(i,:); 
-        line([p1(1),p2(1)],[p1(2),p2(2)], 'Color','r','LineWidth',1);
-    end
-end
-
-function [filenames] = get_all_filenames_with_extension(path, ext)
-    fileList = dir(path);
-    extOk = false(size(fileList));
-    for fileNo = 1:size(fileList,1)
-        [_,_,fileext] = fileparts(fileList(fileNo).name);
-        extOk(fileNo) = strcmp(fileext, ext);
-    end
-    filenames = arrayfun(@(x) [x.name], fileList(extOk), 'UniformOutput', false);
 end
 
 
@@ -98,6 +75,9 @@ end
     [p_a, p_xi_mu, p_xi_var] = train_p_xi_and_p_a(aTrain, LTrain);
     [p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var] = train_p_xiMinusKeypoint(aTrain, LTrain, allKeypoints, allMemberships);
     
+    %prepare p_xi_given_evidence for all a, jointNo pairs
+    kldsjkfljdsflsdjf
+    
     %test best_L_and_a
     imNo = 2;
     keypoints_test = allKeypoints{imNo};
@@ -135,4 +115,21 @@ end
     p_x1_given_a1 = p_xi_given_evidence(1, 1, keypoints_test, p_cj, imsize, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
     imdisp(p_x1_given_a1,[]);
     
+    %FOR POSTER:  show p_xi_given_x0 * (beta + p_xi_given_evidence)
+    
+        M = size(p_xi_mu,2);
+    imsize = size(p_xi_given_appearance);
+    L = zeros(M+1, 2);
+    L(1,:) = x0;
+    pr = 1;
+    for jointNo = 1:M
+        mu_given_x0 = p_xi_mu(a,jointNo,:) + x0;
+        var_given_x0 = p_xi_var(a,jointNo,:,:);
+        p_xi_given_x0 = p_gaussian2D_on_grid(imsize, mu_given_x0, var_given_x0);
+        piece_pr_img = p_xi_given_x0 .* (beta + p_xi_given_appearance(:,:,jointNo));
+        [piece_pr, idx_flat] = max(piece_pr_img(:));
+        pr = pr * piece_pr;
+        L(jointNo+1,:) = ind2sub(size(piece_pr_img), idx_flat);
+    end
+
     

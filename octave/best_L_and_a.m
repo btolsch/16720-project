@@ -1,4 +1,4 @@
-function [L,a,pr] = best_L_and_a(keypoints, p_cj, imsize, p_xi_mu, p_xi_var, p_a, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var, dispProgress=true)
+function [L,a,pr] = best_L_and_a(keypoints, p_cj, imsize, beta, p_xi_mu, p_xi_var, p_a, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var, dispProgress=true)
     %INPUTS
         %keypoints - Nx3 matrix of keypoints in [x,y,~] form
         %p_cj - NxK matrix with the probability of each keypoint's descriptor belonging to each cluster
@@ -21,9 +21,9 @@ function [L,a,pr] = best_L_and_a(keypoints, p_cj, imsize, p_xi_mu, p_xi_var, p_a
     for a_cur = 1:A
         p_xi_given_appearance = zeros([imsize(1), imsize(2), M]);
         for jointNo = 1:M
-            p_xi_given_appearance(:,:,jointNo) = p_xi_given_evidence(jointNo, a, keypoints, p_cj, imsize, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
+            p_xi_given_appearance(:,:,jointNo) = p_xi_given_evidence(jointNo, a, keypoints, p_cj, imsize, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var, dispProgress);
         end
-        [L_cur,pr_cur] = best_L_given_a(a_cur, p_xi_given_appearance, p_xi_mu, p_xi_var);
+        [L_cur,pr_cur] = best_L_given_a(a_cur, p_xi_given_appearance, beta, p_xi_mu, p_xi_var, dispProgress);
         pr_cur = pr_cur * p_a(a_cur);
         if (pr_cur >= pr)
             L = L_cur;
@@ -34,34 +34,41 @@ function [L,a,pr] = best_L_and_a(keypoints, p_cj, imsize, p_xi_mu, p_xi_var, p_a
 end
 
 
-function [L,pr] = best_L_given_a(a, p_xi_given_appearance, p_xi_mu, p_xi_var)
-    [L,pr] = best_L_given_a_naive(a, p_xi_given_appearance, p_xi_mu,p_xi_var);
+function [L,pr] = best_L_given_a(a, p_xi_given_appearance, beta, p_xi_mu, p_xi_var, dispProgress)
+    [L,pr] = best_L_given_a_naive(a, p_xi_given_appearance, beta, p_xi_mu,p_xi_var, dispProgress);
 end
 
 
-function [L,pr] = best_L_given_a_naive(a, p_xi_given_appearance, p_xi_mu, p_xi_var)
+function [L,pr] = best_L_given_a_naive(a, p_xi_given_appearance, beta, p_xi_mu, p_xi_var, dispProgress)
     M = size(p_xi_given_appearance, 3);
     imsize = size(p_xi_given_appearance);
+    if (dispProgress)
+        disp(['Finding best L for a = ',num2str(a),'...']);
+    end
     L = zeros(M+1, 2);
     pr = 0;
     for y = 1:imsize(1)
         for x = 1:imsize(2)
-            [L_cur, pr_cur] = best_L_given_x0_and_a([x,y], a, p_xi_given_appearance, p_xi_mu, p_xi_var)
+            [L_cur, pr_cur] = best_L_given_x0_and_a([x,y], a, p_xi_given_appearance, beta, p_xi_mu, p_xi_var, dispProgress)
             if (pr_cur >= pr)
                 L = L_cur;
                 pr = pr_cur;
             end
         end
     end
+    disp(['  Done.']);
 end
 
 
-function [L,pr] = best_L_given_x0_and_a(x0, a, p_xi_given_appearance, p_xi_mu, p_xi_var)
+function [L,pr] = best_L_given_x0_and_a(x0, a, p_xi_given_appearance, beta, p_xi_mu, p_xi_var, dispProgress)
     M = size(p_xi_mu,2);
     imsize = size(p_xi_given_appearance);
     L = zeros(M+1, 2);
     L(1,:) = x0;
     pr = 1;
+    if (dispProgress)
+        disp(['  Finding best L for a = ',num2str(a),', x0=[',num2str(x0(1)),',',num2str(x0(2)),']...']);
+    end
     for jointNo = 1:M
         mu_given_x0 = p_xi_mu(a,jointNo,:) + x0;
         var_given_x0 = p_xi_var(a,jointNo,:,:);

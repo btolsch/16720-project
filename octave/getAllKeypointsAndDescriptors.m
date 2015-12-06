@@ -15,9 +15,13 @@ function [keypoints, descriptors] = getAllKeypointsAndDescriptors(imgNames, boxe
     numImgs = numel(imgNames);
     keypoints = cell(numImgs, 1);
     descriptors = cell(numImgs, 1);
+    if (dispProgress)
+        disp(['Getting keypoints and descriptors of ',num2str(numImgs),' images...']);
+        fflush(stdout);
+    end
     for imNo = 1:numImgs
-        if (dispProgress)
-            disp(['On image ',num2str(imNo),'/',num2str(numImgs)]);
+        if (dispProgress & rem(imNo,10)==0)
+            disp(['  On image ',num2str(imNo),'/',num2str(numImgs)]);
             fflush(stdout);
         end
         im = imread([imgNames{imNo}]);
@@ -27,5 +31,9 @@ function [keypoints, descriptors] = getAllKeypointsAndDescriptors(imgNames, boxe
         pts(:,1:2) = pts(:,1:2) + box(1:2);
         keypoints{imNo} = pts;
         descriptors{imNo} = shapeContexts(pts);
+    end
+    if (dispProgress)
+        disp(['  Done.']);
+        fflush(stdout);
     end
 end

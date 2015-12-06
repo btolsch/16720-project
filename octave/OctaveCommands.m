@@ -95,8 +95,11 @@ end
     [p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var] = train_p_xiMinusKeypoint(aTrain, LTrain, allKeypoints, allMemberships);
     
     %test best_L_and_a
-    %%still need to find p_xi_given_appearance by calling p_xi_given_evidence() for each joint
-    [L,a,pr] = best_L_and_a(p_xi_given_appearance, p_xi_mu,p_xi_var, p_a)
+    imNo = 2;
+    keypoints_test = allKeypoints{imNo};
+    descriptors_test = allDescriptors{imNo};
+    imsize = [boxesTrain(imNo,4)-boxesTrain(imNo,2)+1, boxesTrain(imNo,3)-boxesTrain(imNo,1)+1];
+    [L,a,pr] = best_L_and_a(keypoints_test, descriptors_test, imsize, codebook, p_xi_mu, p_xi_var, p_a, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
     
     %test p_xi_given_evidence
     imNo = 2;

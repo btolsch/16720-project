@@ -1,9 +1,8 @@
-function [L,a,pr] = best_L_and_a(keypoints, descriptors, imsize, codebook, p_xi_mu, p_xi_var, p_a, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var, dispProgress=true)
+function [L,a,pr] = best_L_and_a(keypoints, p_cj, imsize, p_xi_mu, p_xi_var, p_a, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var, dispProgress=true)
     %INPUTS
         %keypoints - Nx3 matrix of keypoints in [x,y,~] form
-        %descriptors - NxF matrix of descriptors corresponding to each keypoint
+        %p_cj - NxK matrix with the probability of each keypoint's descriptor belonging to each cluster
         %imsize - 1x2 matrix determining the range of positions for which we desire to find p_xi
-        %codebook - KxF matrix giving the centers of each cluster of descriptors
         %p_xi_mu - AxMx2 vector giving the average xi-x0 for each joint and articulation state
         %p_xi_var - AxMx2x2 vector giving the covariance matrix of xi-x0 for each joint and articulation state
         %p_a - numArtic x 1 vector with the probability of each articulation state
@@ -22,7 +21,7 @@ function [L,a,pr] = best_L_and_a(keypoints, descriptors, imsize, codebook, p_xi_
     for a_cur = 1:A
         p_xi_given_appearance = zeros([imsize(1), imsize(2), M]);
         for jointNo = 1:M
-            p_xi_given_appearance(:,:,jointNo) = p_xi_given_evidence(jointNo, a, keypoints, descriptors, imsize, codebook, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
+            p_xi_given_appearance(:,:,jointNo) = p_xi_given_evidence(jointNo, a, keypoints, p_cj, imsize, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
         end
         [L_cur,pr_cur] = best_L_given_a(a_cur, p_xi_given_appearance, p_xi_mu, p_xi_var);
         pr_cur = pr_cur * p_a(a_cur);

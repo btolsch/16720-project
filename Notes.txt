@@ -27,6 +27,11 @@
     --mention shortcomings of Shape Contexts / figuring out how to use them well / limit their region of interest
   --Mention that in we were overly ambitious, and that we could or maybe should have implemented some of the papers mentioned in #0 instead of doing #0 itself, or something
 
+Possible maximization-searching methods:
+   1) just be exhastive, and hope that's good enough for the few images we want to run this on
+   2) sample from scattered points about the whole image, then recursively sample more densely for neighborhood around best sample so far
+   3) downsample the p_xi_given_x0 and p_xi_given_evidence images so that the search space is much much smaller, then be exhastive searching on that.  We can then use increasingly higher-res p_xi_given_x0 and p_xi_given_evidence images.
+   4) try to come up with a gradient descent
 
 
 

@@ -25,13 +25,15 @@ function visualizeShapeContext(fd, nbinsLogR=5, nbinsTheta=12)
     imshow(reshape(fd,[nbinsLogR,nbinsTheta]),[]);
 end
 function visualizeColoredKeypoints(im,keypoints,clusters)
-    colors = 'ymcrgbwkkkkkkkkkkkkkkkkkkkkkkkk';
+    colors =  'ymcrgbwymcrgbwymcrgbwymcrgbwkkkk';
+    markers = '*******+++++++xxxxxxxooooooo*+xo';
+    imshow(im2double(im));
     hold on;
-    imshow(im);
-    for c = 1:max(clusters)
-        pts = keypoints(clusters==c,:);
-        plot(pts(:,1)',pts(:,2)', '*', 'color', colors(c), 'MarkerSize', 6, 'LineWidth', 2);
+    for i = 1:max(clusters)
+        pts = keypoints(clusters==i,:);
+        plot(pts(:,1)',pts(:,2)', markers(i), 'color', colors(i), 'MarkerSize', 6, 'LineWidth', 2);
     end
+    hold off;
 end
 
 
@@ -91,7 +93,9 @@ end
     im = imread([imgnamesTrain_full{imNo}]);
     box = boxesTrain(imNo,:);
     patch = im(box(2):box(4), box(1):box(3), :);
-    visualizeColoredKeypoints(patch,allKeypoints{imNo},allMemberships{imNo});
+    keypoints_test = allKeypoints{imNo};
+    keypoints_test(:,1:2) = keypoints_test(:,1:2) - boxesTrain(imNo,1:2);
+    visualizeColoredKeypoints(patch,keypoints_test,allMemberships{imNo});
     
     %FOR POSTER: get p_xi_given_evidence for single keypoint for single joint
     imNo = 2;

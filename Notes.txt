@@ -197,7 +197,7 @@ What each reference from the main paper is actually used for:
     describes "shape context feature descriptors" - the feature descripture used by [0]
 [17] K. Mikolajczyk and C. Schmid. Scale and affine invariant interest point detectors. IJCV, 60:63–86, 2004.
     http://www.robots.ox.ac.uk/~vgg/research/affine/det_eval_files/mikolajczyk_ijcv2004.pdf
-    describes the "Hessian-Laplace interest point operator" - used as a detector for [0]
+    describes the "Harris-Laplace interest point operator" - used as a detector for [0]
 [6] P. F. Felzenszwalb and D. P. Huttenlocher. Pictorial structures for object recognition. IJCV, 61:55–79, 2007.
     http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.66.5153&rep=rep1&type=pdf
     helped inspire [0]'s part-based sceme, by using a proposes pictorial structures model

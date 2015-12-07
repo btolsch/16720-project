@@ -78,62 +78,43 @@ end
     [p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var] = train_p_xiMinusKeypoint(aTrain, LTrain, allKeypoints, allMemberships);
     
     %prepare p_xi_given_evidence for all a, jointNo pairs
-    kldsjkfljdsflsdjf
-    
-    %test best_L_and_a
-    imNo = 2;
-    keypoints_test = allKeypoints{imNo};
-    descriptors_test = allDescriptors{imNo};
-    imsize = [boxesTrain(imNo,4)-boxesTrain(imNo,2)+1, boxesTrain(imNo,3)-boxesTrain(imNo,1)+1];
-    p_cj = p_cj_for_keypoints(descriptors_test, codebook);
-    [L,a,pr] = best_L_and_a(keypoints_test, p_cj, imsize, p_xi_mu, p_xi_var, p_a, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
-    
-    %FOR POSTER: show how bad the clustering is
+        %NEVER RAN TO COMPLETION
     imNo = 2;
     im = imread([imgnamesTrain_full{imNo}]);
     box = boxesTrain(imNo,:);
-    patch = im(box(2):box(4), box(1):box(3), :);
-    keypoints_test = allKeypoints{imNo};
-    keypoints_test(:,1:2) = keypoints_test(:,1:2) - boxesTrain(imNo,1:2);
-    visualizeColoredKeypoints(patch,keypoints_test,allMemberships{imNo});
+    keypoints = allKeypoints{imNo};
+    descriptors = allDescriptors{imNo};
+    im = im(box(2):box(4), box(1):box(3), :);
+    keypoints(:,1:2) = keypoints(:,1:2) - box(1:2);
+    imsize = [size(im,1), size(im,2)];
+    p_cj = p_cj_for_keypoints(descriptors, codebook);
+    all_p_xi = all_p_xi_given_evidence(keypoints, p_cj, imsize, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
+    save([resultsDir,'im2TestData.mat'], 'im', 'box', 'keypoints', 'descriptors', 'imsize', 'p_cj', 'all_p_xi');
+    
+    %test best_L_and_a
+        %NEVER RAN TO COMPLETION
+    [L,a,pr] = best_L_and_a(keypoints, p_cj, imsize, p_xi_mu, p_xi_var, p_a, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
+    
+    %FOR POSTER: show how bad the clustering is
+    visualizeColoredKeypoints(im,keypoints,allMemberships{imNo});
     
     %FOR POSTER: get p_xi_given_evidence for single keypoint for single joint
-    imNo = 2;
-    keypoints_test = allKeypoints{imNo};
-    descriptors_test = allDescriptors{imNo};
-    keypoints_test = keypoints_test(500,:);
-    descriptors_test = descriptors_test(500,:);
-    keypoints_test(:,1:2) = keypoints_test(:,1:2) - boxesTrain(imNo,1:2);
-    imsize = [boxesTrain(imNo,4)-boxesTrain(imNo,2)+1, boxesTrain(imNo,3)-boxesTrain(imNo,1)+1];
-    p_cj = p_cj_for_keypoints(descriptors_test, codebook);
-    p_x1_given_a1 = p_xi_given_evidence(1, 1, keypoints_test, p_cj, imsize, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
-    plotImAndPts_normalized(p_x1_given_a1, keypoints_test);
+    jointNo = 1; a = 2;
+    p_x1_given_a2 = p_xi_given_evidence(jointNo, a, keypoints(500,:), p_cj, imsize, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
+    plotImAndPts_normalized(p_x1_given_a2, keypoints(500,:));
     
     %FOR POSTER: show p_xi_given_evidence for single joint
-    imNo = 2;
-    keypoints_test = allKeypoints{imNo};
-    descriptors_test = allDescriptors{imNo};
-    keypoints_test(:,1:2) = keypoints_test(:,1:2) - boxesTrain(imNo,1:2);
-    imsize = [boxesTrain(imNo,4)-boxesTrain(imNo,2)+1, boxesTrain(imNo,3)-boxesTrain(imNo,1)+1];
-    p_cj = p_cj_for_keypoints(descriptors_test, codebook);
-    p_x1_given_a1 = p_xi_given_evidence(1, 1, keypoints_test, p_cj, imsize, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
-    imdisp(p_x1_given_a1,[]);
+    jointNo = 1; a = 2;
+    p_x1_given_a1 = p_xi_given_evidence(jointNo, a, keypoints, p_cj, imsize, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
+    imshow(p_x1_given_a1,[]);
     
     %FOR POSTER:  show p_xi_given_x0 * (beta + p_xi_given_evidence)
-    
-        M = size(p_xi_mu,2);
-    imsize = size(p_xi_given_appearance);
-    L = zeros(M+1, 2);
-    L(1,:) = x0;
-    pr = 1;
-    for jointNo = 1:M
-        mu_given_x0 = p_xi_mu(a,jointNo,:) + x0;
-        var_given_x0 = p_xi_var(a,jointNo,:,:);
-        p_xi_given_x0 = p_gaussian2D_on_grid(imsize, mu_given_x0, var_given_x0);
-        piece_pr_img = p_xi_given_x0 .* (beta + p_xi_given_appearance(:,:,jointNo));
-        [piece_pr, idx_flat] = max(piece_pr_img(:));
-        pr = pr * piece_pr;
-        L(jointNo+1,:) = ind2sub(size(piece_pr_img), idx_flat);
-    end
-
+    jointNo = 1; a = 2;
+    x0 = double(reshape(LTrain(imNo,1,:),[1,2]) - box(1:2));
+    p_xi_given_appearance = p_xi_given_evidence(jointNo, a, keypoints, p_cj, imsize, p_xiMinusKeypoint_mu, p_xiMinusKeypoint_var);
+    mu_given_x0 = reshape(p_xi_mu(a,jointNo,:),[1,2]) + x0;
+    var_given_x0 = p_xi_var(a,jointNo,:,:);
+    p_xi_given_x0 = p_gaussian2D_on_grid(imsize, mu_given_x0, var_given_x0);
+    piece_pr_img = p_xi_given_x0 .* (beta + p_xi_given_appearance(:,:,jointNo));
+    imshow(piece_pr_img,[]);
     
